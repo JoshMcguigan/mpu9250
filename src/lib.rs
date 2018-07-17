@@ -18,7 +18,6 @@
 //! [2]: https://www.invensense.com/wp-content/uploads/2015/02/RM-MPU-9250A-00-v1.6.pdf
 
 #![deny(missing_docs)]
-#![deny(warnings)]
 #![no_std]
 
 extern crate cast;
@@ -84,33 +83,33 @@ where
     // (this should be the default after a soft reset)
     debug_assert_eq!(mpu9250.read(Register::PWR_MGMT_2)?, 0x00);
 
-    if TypeId::of::<MODE>() == TypeId::of::<Marg>() {
-        // isolate the auxiliary master I2C bus (AUX_CL, AUX_DA)
-        // disable the slave I2C bus, make serial interface SPI only
-        // reset the master I2C bus
-        mpu9250.write(Register::USER_CTRL, 0x32)?;
-
-        // set aux I2C frequency to 400 KHz
-        mpu9250.write(Register::I2C_MST_CTRL, 0x0d)?;
-
-        // sanity check that the aux I2C is working
-        debug_assert_eq!(mpu9250.ak8963_read(ak8963::Register::WIA)?, 0x48);
-
-        // software reset the magnetometer
-        // FIXME this hangs when compiled in release mode
-        mpu9250.ak8963_write(ak8963::Register::CNTL2, 0x01)?;
-
-        // XXX is this enough?
-        delay.delay_ms(1);
-
-        // 100 Hz (?) continuous measurement, 16-bit
-        mpu9250.ak8963_write(ak8963::Register::CNTL1, 0x16)?;
-
-        // configure sampling of magnetometer
-        mpu9250.write(Register::I2C_SLV0_ADDR, ak8963::I2C_ADDRESS | ak8963::R)?;
-        mpu9250.write(Register::I2C_SLV0_REG, ak8963::Register::HXL.addr())?;
-        mpu9250.write(Register::I2C_SLV0_CTRL, 0x87)?;
-    }
+//    if TypeId::of::<MODE>() == TypeId::of::<Marg>() {
+//        // isolate the auxiliary master I2C bus (AUX_CL, AUX_DA)
+//        // disable the slave I2C bus, make serial interface SPI only
+//        // reset the master I2C bus
+//        mpu9250.write(Register::USER_CTRL, 0x32)?;
+//
+//        // set aux I2C frequency to 400 KHz
+//        mpu9250.write(Register::I2C_MST_CTRL, 0x0d)?;
+//
+//        // sanity check that the aux I2C is working
+//        debug_assert_eq!(mpu9250.ak8963_read(ak8963::Register::WIA)?, 0x48);
+//
+//        // software reset the magnetometer
+//        // FIXME this hangs when compiled in release mode
+//        mpu9250.ak8963_write(ak8963::Register::CNTL2, 0x01)?;
+//
+//        // XXX is this enough?
+//        delay.delay_ms(1);
+//
+//        // 100 Hz (?) continuous measurement, 16-bit
+//        mpu9250.ak8963_write(ak8963::Register::CNTL1, 0x16)?;
+//
+//        // configure sampling of magnetometer
+//        mpu9250.write(Register::I2C_SLV0_ADDR, ak8963::I2C_ADDRESS | ak8963::R)?;
+//        mpu9250.write(Register::I2C_SLV0_REG, ak8963::Register::HXL.addr())?;
+//        mpu9250.write(Register::I2C_SLV0_CTRL, 0x87)?;
+//    }
 
     Ok(mpu9250)
 }
