@@ -44,23 +44,16 @@ pub struct Imu;
 /// Magnetometer + Accelerometer + Gyroscope
 pub struct Marg;
 
-/// MPU9250 driver
-pub struct Mpu9250<SPI, NCS, MODE> {
-    spi: SPI,
-    ncs: NCS,
-    _mode: PhantomData<MODE>,
-}
-
 fn new<SPI, NCS, MODE, D, E>(
     spi: SPI,
     ncs: NCS,
     delay: &mut D,
 ) -> Result<Mpu9250<SPI, NCS, MODE>, E>
-where
-    D: DelayMs<u8>,
-    MODE: Any,
-    NCS: OutputPin,
-    SPI: spi::Write<u8, Error = E> + spi::Transfer<u8, Error = E>,
+    where
+        D: DelayMs<u8>,
+        MODE: Any,
+        NCS: OutputPin,
+        SPI: spi::Write<u8, Error = E> + spi::Transfer<u8, Error = E>,
 {
     let mut mpu9250 = Mpu9250 {
         spi,
@@ -72,11 +65,17 @@ where
     mpu9250.write(Register::PWR_MGMT_1, 0x80)?;
 
     // XXX is this enough?
-    delay.delay_ms(1);
+    delay.delay_ms(100);
 
     // use the best clock
     mpu9250.write(Register::PWR_MGMT_1, 0x01)?;
 
+    delay.delay_ms(100);
+
+    // reset all signal paths
+    mpu9250.write(Register::SIGNAL_PATH_RESET, 0x07);
+
+    delay.delay_ms(1000);
     // XXX do we need another delay here?
 
     // sanity check that both the accelerometer and gyroscope are enabled
@@ -112,6 +111,13 @@ where
 //    }
 
     Ok(mpu9250)
+}
+
+/// MPU9250 driver
+pub struct Mpu9250<SPI, NCS, MODE> {
+    spi: SPI,
+    ncs: NCS,
+    _mode: PhantomData<MODE>,
 }
 
 impl<E, SPI, NCS> Mpu9250<SPI, NCS, Imu>
@@ -428,6 +434,7 @@ enum Register {
     PWR_MGMT_2 = 0x6c,
     TEMP_OUT_H = 0x41,
     USER_CTRL = 0x6a,
+    SIGNAL_PATH_RESET = 0x68,
     WHO_AM_I = 0x75,
 }
 
